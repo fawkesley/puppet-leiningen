@@ -7,36 +7,34 @@ class leiningen::install($user, $version="2") {
     $executable_url = "https://github.com/technomancy/leiningen/raw/stable/bin/lein"
   }
 
-  package { "leiningen/install-wget":
-    name => "wget",
+  file { "/home/${user}/bin/lein": 
+    mode => 0755,
+    require => [Exec["download_leiningen"],
+                File["/home/${user}/bin"]]
+  }
+
+  exec { "download_leiningen" :
+    command => "/usr/bin/wget -q ${executable_url} -O /home/$user/bin/lein",
+    creates => "/home/${user}/bin/lein",
+    require => Package["wget"]
+  }
+
+  package { "wget":
+    name   => "wget",
     ensure => present,
   }
 
-  file { "leiningen/create-local-bin-folder":
+  file { "/home/${user}/bin" :
     ensure => directory,
-    path => "/home/$user/.bin",
     owner => $user,
     group => $user,
     mode => '755',
+    require => File["/etc/profile.d/local_bin_in_path.sh"],
   }
 
-  file { "/etc/profile.d/dot_bin_in_path.sh":
+  file { "/etc/profile.d/local_bin_in_path.sh":
     ensure  => present,
-    content => 'PATH=${PATH}:~/.bin'
-  }
-
-  exec { "leiningen/install-script":
-    user => $user,
-    group => $user,
-    path => ["/bin", "/usr/bin", "/usr/local/bin"],
-    cwd => "/home/$user/.bin",
-    command => "wget ${executable_url} && chmod 755 lein",
-    creates => ["/home/$user/.bin/lein",
-                "/home/$user/.lein"],
-    
-    require => [File["/etc/profile.d/dot_bin_in_path.sh"],
-                File["leiningen/create-local-bin-folder"],
-                Package["leiningen/install-wget"]],
+    content => 'PATH=${PATH}:~/bin'
   }
 
 }
