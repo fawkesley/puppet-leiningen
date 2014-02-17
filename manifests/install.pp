@@ -1,5 +1,4 @@
 class leiningen::install($user, $version="2") {
-  include java
 
   if $version == "2" {
     $executable_url = "https://raw.github.com/technomancy/leiningen/preview/bin/lein"
@@ -21,6 +20,11 @@ class leiningen::install($user, $version="2") {
     mode => '755',
   }
 
+  file { "/etc/profile.d/dot_bin_in_path.sh":
+    ensure  => present,
+    content => 'PATH=${PATH}:~/.bin'
+  }
+
   exec { "leiningen/install-script":
     user => $user,
     group => $user,
@@ -29,7 +33,8 @@ class leiningen::install($user, $version="2") {
     command => "wget ${executable_url} && chmod 755 lein",
     creates => ["/home/$user/.bin/lein",
                 "/home/$user/.lein"],
-    require => [Class["java::install"],
+    
+    require => [File["/etc/profile.d/dot_bin_in_path.sh"],
                 File["leiningen/create-local-bin-folder"],
                 Package["leiningen/install-wget"]],
   }
