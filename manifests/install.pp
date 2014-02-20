@@ -16,7 +16,8 @@ class leiningen::install($user, $version="2") {
   exec { "download_leiningen" :
     command => "/usr/bin/wget -q ${executable_url} -O /home/$user/bin/lein",
     creates => "/home/${user}/bin/lein",
-    require => Package["wget"]
+    require => [Package["wget"],
+                File["/home/${user}/bin"]]
   }
 
   package { "wget":
